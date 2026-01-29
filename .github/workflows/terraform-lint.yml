@@ -1,0 +1,38 @@
+name: Terraform Format and Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'tools/terraform/**'
+      - '.github/workflows/terraform-lint.yml'
+
+jobs:
+  lint:
+    name: Format and Lint Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11"
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Run TFLint
+        run: tflint --recursive -c "$(realpath .tflint.hcl)"

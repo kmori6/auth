@@ -1,0 +1,37 @@
+services:
+  auth:
+    build:
+      context: ./apps/auth
+      dockerfile: docker/Dockerfile
+    env_file:
+      - ./apps/auth/.env
+    environment:
+      - POSTGRES_ENDPOINT_URL=postgres://postgres:postgres@postgres:5432/auth
+    ports:
+      - "3000:3000"
+
+  postgres:
+    image: postgres:18.1
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  flyway-postgres:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://postgres:5432/postgres -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
+    volumes:
+      - ./tools/flyway/postgres/sql:/flyway/sql
+    depends_on:
+      - postgres
+
+  flyway-auth:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://postgres:5432/auth -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
+    volumes:
+      - ./tools/flyway/auth/sql:/flyway/sql
+      - ./tools/flyway/auth/data:/var/lib/postgresql/data
+    depends_on:
+      - postgres
+      - flyway-postgres
