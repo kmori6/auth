@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: false
+  commands:
+    auth-fmt:
+      glob: "apps/auth/**/*.rs"
+      run: cd apps/auth && cargo fmt
+    auth-lint:
+      glob: "apps/auth/**/*.rs"
+      run: cd apps/auth && cargo clippy --fix --allow-dirty --allow-staged -- -D warnings
+    web-fmt:
+      glob: "apps/web/**"
+      run: cd apps/web && bun format --write
+    web-lint:
+      glob: "apps/web/**"
+      run: cd apps/web && bun lint --write
+    terraform-fmt:
+      glob: "tools/terraform/**/*.tf"
+      run: cd tools/terraform && terraform fmt -recursive
+    terraform-lint:
+      glob: "tools/terraform/**/*.tf"
+      run: cd tools/terraform && tflint --recursive -c "$(realpath .tflint.hcl)" --fix
