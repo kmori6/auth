@@ -18,19 +18,33 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./tools/migrations/data/postgres:/var/lib/postgresql/data
+      - ./tools/migrations/data/postgres:/var/lib/postgresql
 
   flyway-postgres:
-    image: flyway/flyway
-    command: -url=jdbc:postgresql://postgres:5432/postgres -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
+    build:
+      context: ./tools/migrations
+      dockerfile: docker/Dockerfile
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://postgres:5432/postgres
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_USER=postgres
+      - FLYWAY_PASSWORD=postgres
+      - FLYWAY_CONNECT_RETRIES=60
     volumes:
       - ./tools/migrations/sql/postgres:/flyway/sql
     depends_on:
       - postgres
 
   flyway-auth:
-    image: flyway/flyway
-    command: -url=jdbc:postgresql://postgres:5432/auth -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
+    build:
+      context: ./tools/migrations
+      dockerfile: docker/Dockerfile
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://postgres:5432/auth
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_USER=postgres
+      - FLYWAY_PASSWORD=postgres
+      - FLYWAY_CONNECT_RETRIES=60
     volumes:
       - ./tools/migrations/sql/auth:/flyway/sql
     depends_on:
