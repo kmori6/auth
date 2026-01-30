@@ -17,6 +17,8 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - ./tools/migrations/data/postgres:/var/lib/postgresql/data
 
   flyway-postgres:
     image: flyway/flyway
