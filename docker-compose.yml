@@ -22,7 +22,7 @@ services:
     image: flyway/flyway
     command: -url=jdbc:postgresql://postgres:5432/postgres -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
     volumes:
-      - ./tools/flyway/postgres/sql:/flyway/sql
+      - ./tools/migrations/sql/postgres:/flyway/sql
     depends_on:
       - postgres
 
@@ -30,8 +30,7 @@ services:
     image: flyway/flyway
     command: -url=jdbc:postgresql://postgres:5432/auth -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
     volumes:
-      - ./tools/flyway/auth/sql:/flyway/sql
-      - ./tools/flyway/auth/data:/var/lib/postgresql/data
+      - ./tools/migrations/sql/auth:/flyway/sql
     depends_on:
       - postgres
       - flyway-postgres
