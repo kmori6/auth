@@ -45,7 +45,7 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          aws s3 sync ./apps/web/dist ${{ secrets.S3_BUCKET_URL }} --delete
+          aws s3 sync ./dist ${{ secrets.S3_BUCKET_URL }} --delete
 
       - name: Invalidate CloudFront cache
         run: |
