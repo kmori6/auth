@@ -48,6 +48,11 @@ variable "ecr_repository_url" {
   type        = string
 }
 
+variable "flyway_ecr_repository_url" {
+  description = "The URL of the Flyway ECR repository."
+  type        = string
+}
+
 variable "container_image_tag" {
   description = "The tag of the container image."
   type        = string
@@ -60,6 +65,11 @@ variable "ecs_task_cpu" {
 
 variable "ecs_task_memory" {
   description = "The memory (MB) for the ECS task."
+  type        = number
+}
+
+variable "ecs_desired_count" {
+  description = "Number of ECS service tasks to run. Set to 0 before database migration."
   type        = number
 }
 

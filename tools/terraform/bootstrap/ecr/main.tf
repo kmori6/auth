@@ -23,3 +23,9 @@ module "ecr_repository" {
   source = "../../modules/atoms/ecr"
   name   = "${var.prefix}-ecr"
 }
+
+# ECR for flyway
+module "ecr_flyway_repository" {
+  source = "../../modules/atoms/ecr"
+  name   = "${var.prefix}-flyway-ecr"
+}

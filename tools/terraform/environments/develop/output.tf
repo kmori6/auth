@@ -86,3 +86,9 @@ output "client_website_url" {
   description = "The URL of the client website"
   value       = module.client.website_url
 }
+
+# Flyway Outputs
+output "flyway_task_family" {
+  description = "The family name of the Flyway task definition"
+  value       = module.flyway.flyway_task_family
+}
