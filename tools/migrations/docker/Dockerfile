@@ -1,3 +1,3 @@
-FROM flyway/flyway
+FROM flyway/flyway:latest
 
-CMD ["migrate"]
+COPY sql/ /flyway/sql/
