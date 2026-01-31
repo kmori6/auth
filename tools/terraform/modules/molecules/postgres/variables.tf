@@ -29,11 +29,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "db_name" {
-  description = "Initial database name to create."
-  type        = string
-}
-
 variable "db_instance_class" {
   description = "The instance class for the RDS instance."
   type        = string
