@@ -1,0 +1,119 @@
+name: Run Database Migrations
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "tools/migrations/sql/**"
+      - ".github/workflows/migrations-deploy.yml"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: ${{ secrets.FLYWAY_ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  FLYWAY_TASK_FAMILY: ${{ secrets.FLYWAY_TASK_FAMILY }}
+  FLYWAY_CONTAINER_NAME: ${{ secrets.FLYWAY_CONTAINER_NAME }}
+  PRIVATE_SUBNET_1: ${{ secrets.PRIVATE_SUBNET_1 }}
+  PRIVATE_SUBNET_2: ${{ secrets.PRIVATE_SUBNET_2 }}
+  ECS_SECURITY_GROUP: ${{ secrets.ECS_SECURITY_GROUP }}
+  DB_ENDPOINT: ${{ secrets.DB_ENDPOINT }}
+  DB_NAME: auth
+  DB_USERNAME: ${{ secrets.DB_USERNAME }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+jobs:
+  run-migrations:
+    name: Run Migrations
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: tools/migrations
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Download current task definition from AWS
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.FLYWAY_TASK_FAMILY }} \
+            --query taskDefinition \
+            > $GITHUB_WORKSPACE/task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1.8.3
+        with:
+          task-definition: ${{ github.workspace }}/task-definition.json
+          container-name: ${{ env.FLYWAY_CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Register new task definition
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.task-def.outputs.task-definition }}
+
+      - name: Run Flyway migration for auth database
+        run: |
+          set -euo pipefail
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.FLYWAY_TASK_FAMILY }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.PRIVATE_SUBNET_1 }},${{ env.PRIVATE_SUBNET_2 }}],securityGroups=[${{ env.ECS_SECURITY_GROUP }}],assignPublicIp=DISABLED}" \
+            --overrides '{
+              "containerOverrides": [{
+                "name": "${{ env.FLYWAY_CONTAINER_NAME }}",
+                "environment": [
+                  {"name": "FLYWAY_URL", "value": "jdbc:postgresql://${{ env.DB_ENDPOINT }}:5432/${{ env.DB_NAME }}"},
+                  {"name": "FLYWAY_SCHEMAS", "value": "public"},
+                  {"name": "FLYWAY_USER", "value": "${{ env.DB_USERNAME }}"},
+                  {"name": "FLYWAY_PASSWORD", "value": "${{ env.DB_PASSWORD }}"},
+                  {"name": "FLYWAY_CONNECT_RETRIES", "value": "60"},
+                  {"name": "FLYWAY_LOCATIONS", "value": "filesystem:/flyway/sql/${{ env.DB_NAME }}"}
+                ]
+              }]
+            }' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "Started Flyway task: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          [ "$EXIT_CODE" = "0" ] || exit 1
+
+          echo "Migration completed successfully"
