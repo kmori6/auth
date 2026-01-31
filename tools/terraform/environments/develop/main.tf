@@ -114,7 +114,14 @@ module "postgres" {
   db_engine_version     = var.db_engine_version
 }
 
-#
+# Flyway Module (Database Migration)
+module "flyway" {
+  source = "../../modules/molecules/flyway"
+
+  prefix                    = var.prefix
+  region                    = var.region
+  flyway_ecr_repository_url = var.flyway_ecr_repository_url
+}
 
 # S3 Bucket for Client (data source)
 data "aws_s3_bucket" "client" {

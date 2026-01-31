@@ -48,6 +48,11 @@ variable "ecr_repository_url" {
   type        = string
 }
 
+variable "flyway_ecr_repository_url" {
+  description = "The URL of the Flyway ECR repository."
+  type        = string
+}
+
 variable "container_image_tag" {
   description = "The tag of the container image."
   type        = string
