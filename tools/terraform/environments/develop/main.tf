@@ -95,6 +95,7 @@ module "auth" {
   db_username           = var.db_username
   db_password           = var.db_password
   db_name               = var.db_name
+  desired_count         = var.ecs_desired_count
 }
 
 # PostgreSQL RDS Module

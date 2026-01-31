@@ -73,3 +73,8 @@ variable "db_name" {
   description = "PostgreSQL database name for connection string."
   type        = string
 }
+
+variable "desired_count" {
+  description = "Number of ECS service tasks to run. Set to 0 before database migration."
+  type        = number
+}

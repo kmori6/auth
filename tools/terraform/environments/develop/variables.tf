@@ -68,6 +68,11 @@ variable "ecs_task_memory" {
   type        = number
 }
 
+variable "ecs_desired_count" {
+  description = "Number of ECS service tasks to run. Set to 0 before database migration."
+  type        = number
+}
+
 variable "db_username" {
   description = "Master username for the database."
   type        = string
