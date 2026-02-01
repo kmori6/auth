@@ -12,11 +12,7 @@ terraform {
 resource "aws_ssm_parameter" "jwt_private_key" {
   name  = "/${var.prefix}/jwt_private_key"
   type  = "SecureString"
-  value = "placeholder"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
+  value = var.jwt_private_key
 
   tags = {
     Name = "${var.prefix}-jwt-private-key"

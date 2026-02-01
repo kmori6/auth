@@ -78,3 +78,9 @@ variable "desired_count" {
   description = "Number of ECS service tasks to run. Set to 0 before database migration."
   type        = number
 }
+
+variable "jwt_private_key" {
+  description = "JWT private key for token generation."
+  type        = string
+  sensitive   = true
+}

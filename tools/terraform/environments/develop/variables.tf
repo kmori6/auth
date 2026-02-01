@@ -123,3 +123,9 @@ variable "bastion_allowed_ssh_cidr" {
   description = "CIDR blocks allowed to SSH to bastion."
   type        = list(string)
 }
+
+variable "jwt_private_key" {
+  description = "JWT private key for token generation."
+  type        = string
+  sensitive   = true
+}
