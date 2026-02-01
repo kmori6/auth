@@ -96,6 +96,7 @@ module "auth" {
   db_password           = var.db_password
   db_name               = var.db_name
   desired_count         = var.ecs_desired_count
+  jwt_private_key       = var.jwt_private_key
 }
 
 # PostgreSQL RDS Module
