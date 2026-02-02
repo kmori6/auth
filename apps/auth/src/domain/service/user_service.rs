@@ -33,8 +33,4 @@ impl<T: UserRepository> UserService<T> {
 
         Ok(user)
     }
-
-    pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<Option<User>, AppError> {
-        self.user_repository.find_user_by_id(&user_id).await
-    }
 }
