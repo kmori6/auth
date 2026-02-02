@@ -1,7 +1,12 @@
 use crate::application::config::app_state::AppState;
-use crate::application::model::user::UserResponse;
+use crate::application::model::user::{ErrorResponse, UserResponse};
 use crate::domain::repository::user_repository::UserRepository;
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{
+    Json,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
@@ -11,7 +16,7 @@ use std::sync::Arc;
 pub async fn get_user<T: UserRepository>(
     State(state): State<Arc<AppState<T>>>,
     TypedHeader(bearer): TypedHeader<Authorization<Bearer>>,
-) -> (StatusCode, Json<UserResponse>) {
+) -> Response {
     let user = state
         .authorization_service
         .verify_token(bearer.token())
@@ -23,22 +28,22 @@ pub async fn get_user<T: UserRepository>(
                 email: user.email,
                 created_at: user.created_at,
             };
-            (StatusCode::OK, Json(user_response))
+            (StatusCode::OK, Json(user_response)).into_response()
         }
         Err(_) => (
             StatusCode::UNAUTHORIZED,
-            Json(UserResponse {
-                id: uuid::Uuid::nil(),
-                email: "".to_string(),
-                created_at: chrono::Utc::now(),
+            Json(ErrorResponse {
+                error: "Unauthorized".to_string(),
+                message: "Invalid or expired token".to_string(),
             }),
-        ),
+        )
+            .into_response(),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use axum::{extract::State, http::StatusCode};
+    use axum::{body::to_bytes, extract::State, http::StatusCode};
     use axum_extra::{TypedHeader, headers::Authorization};
     use chrono::Utc;
     use dotenvy::dotenv;
@@ -47,7 +52,7 @@ mod tests {
     use uuid::Uuid;
 
     use crate::{
-        application::config::app_state::AppState,
+        application::{config::app_state::AppState, model::user::UserResponse},
         domain::{
             model::user::User,
             repository::user_repository::MockUserRepository,
@@ -100,11 +105,15 @@ mod tests {
         });
 
         let bearer = TypedHeader(Authorization::bearer(&token).unwrap());
-        let (status, user) = super::get_user(State(app_state), bearer).await;
+        let response = super::get_user(State(app_state), bearer).await;
 
-        assert_eq!(status, StatusCode::OK);
-        assert_eq!(user.0.id, user_id);
-        assert_eq!(user.0.email, "test@example.com");
+        let (parts, body) = response.into_parts();
+        assert_eq!(parts.status, StatusCode::OK);
+
+        let body_bytes = to_bytes(body, usize::MAX).await.unwrap();
+        let user: UserResponse = serde_json::from_slice(&body_bytes).unwrap();
+        assert_eq!(user.id, user_id);
+        assert_eq!(user.email, "test@example.com");
     }
 
     #[tokio::test]
@@ -130,8 +139,9 @@ mod tests {
         });
 
         let bearer = TypedHeader(Authorization::bearer("invalid_token").unwrap());
-        let (status, _) = super::get_user(State(app_state), bearer).await;
+        let response = super::get_user(State(app_state), bearer).await;
 
-        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        let (parts, _body) = response.into_parts();
+        assert_eq!(parts.status, StatusCode::UNAUTHORIZED);
     }
 }

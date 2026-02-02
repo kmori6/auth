@@ -8,9 +8,15 @@ pub struct UserRequest {
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UserResponse {
     pub id: Uuid,
     pub email: String,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub error: String,
+    pub message: String,
 }
