@@ -18,6 +18,7 @@ impl<T: UserRepository> UserService<T> {
             user_repository,
         }
     }
+
     pub async fn register_user(&self, email: &str, password: &str) -> Result<User, AppError> {
         let hashed_password = self.password_service.hash(password)?;
 
@@ -31,5 +32,9 @@ impl<T: UserRepository> UserService<T> {
         self.user_repository.create_user(&user).await?;
 
         Ok(user)
+    }
+
+    pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<Option<User>, AppError> {
+        self.user_repository.find_user_by_id(&user_id).await
     }
 }
