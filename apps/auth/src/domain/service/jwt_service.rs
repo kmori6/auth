@@ -1,7 +1,7 @@
 use crate::domain::error::app_error::AppError;
 use crate::domain::model::jwt::Claims;
 use chrono::Utc;
-use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 
 pub struct JwtService {
     private_rsa_pem_key: String,
@@ -30,5 +30,15 @@ impl JwtService {
             .map_err(|_| AppError::Unknown)?;
         encode(&Header::new(Algorithm::RS256), &claims, &encoding_key)
             .map_err(|_| AppError::Unknown)
+    }
+
+    pub fn verify_token(&self, token: &str) -> Result<Claims, AppError> {
+        let decoding_key = DecodingKey::from_rsa_pem(self.private_rsa_pem_key.as_bytes())
+            .map_err(|_| AppError::Unknown)?;
+        let validation = Validation::new(Algorithm::RS256);
+        let token_data =
+            decode::<Claims>(token, &decoding_key, &validation).map_err(|_| AppError::Unknown)?;
+
+        Ok(token_data.claims)
     }
 }
