@@ -4,7 +4,7 @@ use crate::application::handler::healthcheck::healthcheck;
 use crate::application::handler::login::login;
 use crate::application::handler::register_user::register_user;
 use crate::domain::service::authorization_service::AuthorizationService;
-use crate::domain::service::jwt_service::JWTService;
+use crate::domain::service::jwt_service::JwtService;
 use crate::domain::service::password_service::PasswordService;
 use crate::domain::service::user_service::UserService;
 use crate::infrastructure::repository::sqlx_pool::SqlxPool;
@@ -41,7 +41,7 @@ async fn main() {
     let user_repository_for_auth = SqlxUserRepository { sqlx_pool };
 
     let password_service = Arc::new(PasswordService);
-    let jwt_service = Arc::new(JWTService::new(jwt_private_key, jwt_expiration_seconds));
+    let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_expiration_seconds));
     let user_service = UserService::new(password_service.clone(), Arc::new(user_repository));
     let authorization_service = AuthorizationService::new(
         password_service,

@@ -3,14 +3,14 @@ use crate::domain::model::jwt::Claims;
 use chrono::Utc;
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 
-pub struct JWTService {
+pub struct JwtService {
     private_rsa_pem_key: String,
     expiration_seconds: i64,
 }
 
-impl JWTService {
+impl JwtService {
     pub fn new(private_rsa_pem_key: String, expiration_seconds: i64) -> Self {
-        JWTService {
+        JwtService {
             private_rsa_pem_key,
             expiration_seconds,
         }
