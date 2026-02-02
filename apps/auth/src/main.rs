@@ -32,6 +32,8 @@ async fn main() {
         .expect("POSTGRES_ENDPOINT_URL must be set in .env or environment");
     let jwt_private_key = std::env::var("JWT_PRIVATE_KEY")
         .expect("JWT_PRIVATE_KEY must be set in .env or environment");
+    let jwt_public_key = std::env::var("JWT_PUBLIC_KEY")
+        .expect("JWT_PUBLIC_KEY must be set in .env or environment");
     let jwt_expiration_seconds = 60; // 1 minutes
 
     let sqlx_pool = SqlxPool::new(&database_url).await;
@@ -41,7 +43,7 @@ async fn main() {
     let user_repository_for_auth = SqlxUserRepository { sqlx_pool };
 
     let password_service = Arc::new(PasswordService);
-    let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_expiration_seconds));
+    let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_public_key, jwt_expiration_seconds));
     let user_service = UserService::new(password_service.clone(), Arc::new(user_repository));
     let authorization_service = AuthorizationService::new(
         password_service,

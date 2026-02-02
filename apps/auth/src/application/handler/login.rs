@@ -50,6 +50,8 @@ mod tests {
         dotenvy::dotenv().ok();
         let jwt_private_key =
             std::env::var("JWT_PRIVATE_KEY").expect("JWT_PRIVATE_KEY must be set");
+        let jwt_public_key =
+            std::env::var("JWT_PUBLIC_KEY").expect("JWT_PUBLIC_KEY must be set");
 
         let user_id = Uuid::new_v4();
         let email = "test@example.com";
@@ -74,7 +76,7 @@ mod tests {
         let password_service = Arc::new(PasswordService);
         let authorization_service = Arc::new(AuthorizationService::new(
             password_service.clone(),
-            Arc::new(JwtService::new(jwt_private_key, 3600)),
+            Arc::new(JwtService::new(jwt_private_key, jwt_public_key, 3600)),
             Arc::new(mock_repo),
         ));
         let user_service = Arc::new(UserService::new(
@@ -102,6 +104,8 @@ mod tests {
         dotenvy::dotenv().ok();
         let jwt_private_key =
             std::env::var("JWT_PRIVATE_KEY").expect("JWT_PRIVATE_KEY must be set");
+        let jwt_public_key =
+            std::env::var("JWT_PUBLIC_KEY").expect("JWT_PUBLIC_KEY must be set");
 
         let email = "test@example.com";
         let password_service = PasswordService;
@@ -123,7 +127,7 @@ mod tests {
             .returning(move |_| Ok(Some(expected_user_clone.clone())));
 
         let password_service = Arc::new(PasswordService);
-        let jwt_service = Arc::new(JwtService::new(jwt_private_key, 3600));
+        let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_public_key, 3600));
         let authorization_service = Arc::new(AuthorizationService::new(
             password_service.clone(),
             jwt_service,

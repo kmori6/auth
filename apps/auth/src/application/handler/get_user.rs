@@ -63,7 +63,9 @@ mod tests {
         dotenv().ok();
         let jwt_private_key =
             std::env::var("JWT_PRIVATE_KEY").expect("JWT_PRIVATE_KEY must be set in .env file");
-        let jwt_service = Arc::new(JwtService::new(jwt_private_key, 3600));
+        let jwt_public_key =
+            std::env::var("JWT_PUBLIC_KEY").expect("JWT_PUBLIC_KEY must be set in .env file");
+        let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_public_key, 3600));
 
         let user_id = Uuid::new_v4();
         let token = jwt_service.generate_token(&user_id.to_string()).unwrap();
@@ -80,16 +82,17 @@ mod tests {
             .with(eq(user_id))
             .times(1)
             .returning(move |_| Ok(Some(expected_user.clone())));
+        let mock_repo = Arc::new(mock_repo);
 
         let password_service = Arc::new(PasswordService);
         let user_service = Arc::new(UserService::new(
             password_service.clone(),
-            Arc::new(mock_repo),
+            mock_repo.clone(),
         ));
         let authorization_service = Arc::new(AuthorizationService::new(
             password_service,
             jwt_service.clone(),
-            user_service.user_repository.clone(),
+            mock_repo.clone(),
         ));
         let app_state = Arc::new(AppState {
             user_service,
@@ -110,7 +113,8 @@ mod tests {
 
         let password_service = Arc::new(PasswordService);
         let jwt_private_key = "invalid_key".to_string();
-        let jwt_service = Arc::new(JwtService::new(jwt_private_key, 3600));
+        let jwt_public_key = "invalid_key".to_string();
+        let jwt_service = Arc::new(JwtService::new(jwt_private_key, jwt_public_key, 3600));
         let user_service = Arc::new(UserService::new(
             password_service.clone(),
             Arc::new(mock_repo),
