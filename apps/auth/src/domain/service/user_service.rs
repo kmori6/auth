@@ -18,6 +18,7 @@ impl<T: UserRepository> UserService<T> {
             user_repository,
         }
     }
+
     pub async fn register_user(&self, email: &str, password: &str) -> Result<User, AppError> {
         let hashed_password = self.password_service.hash(password)?;
 

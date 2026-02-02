@@ -1,9 +1,11 @@
 use crate::domain::error::app_error::AppError;
 use crate::domain::model::jwt::Jwt;
+use crate::domain::model::user::User;
 use crate::domain::repository::user_repository::UserRepository;
 use crate::domain::service::jwt_service::JwtService;
 use crate::domain::service::password_service::PasswordService;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub struct AuthorizationService<T: UserRepository> {
     password_service: Arc<PasswordService>,
@@ -46,5 +48,15 @@ impl<T: UserRepository> AuthorizationService<T> {
         }
 
         Err(AppError::Unknown)
+    }
+
+    pub async fn verify_token(&self, token: &str) -> Result<User, AppError> {
+        let claims = self.jwt_service.verify_token(token)?;
+        let user_id = Uuid::parse_str(&claims.sub).map_err(|_| AppError::Unknown)?;
+        let result = self.user_repository.find_user_by_id(&user_id).await?;
+        match result {
+            Some(user) => Ok(user),
+            None => Err(AppError::Unknown),
+        }
     }
 }

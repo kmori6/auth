@@ -2,6 +2,7 @@ use crate::domain::error::app_error::AppError;
 use crate::domain::model::user::User;
 use crate::domain::repository::user_repository::UserRepository;
 use crate::infrastructure::repository::sqlx_pool::SqlxPool;
+use uuid::Uuid;
 
 pub struct SqlxUserRepository {
     pub sqlx_pool: SqlxPool,
@@ -27,6 +28,16 @@ impl UserRepository for SqlxUserRepository {
     async fn find_user_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as::<sqlx::Postgres, User>("SELECT * FROM users WHERE email = $1")
             .bind(email)
+            .fetch_optional(&self.sqlx_pool.pool)
+            .await
+            .map_err(|_e| AppError::Unknown)?;
+
+        Ok(user)
+    }
+
+    async fn find_user_by_id(&self, id: &Uuid) -> Result<Option<User>, AppError> {
+        let user = sqlx::query_as::<sqlx::Postgres, User>("SELECT * FROM users WHERE id = $1")
+            .bind(id)
             .fetch_optional(&self.sqlx_pool.pool)
             .await
             .map_err(|_e| AppError::Unknown)?;
