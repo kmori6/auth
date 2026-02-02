@@ -1,20 +1,20 @@
 use crate::domain::error::app_error::AppError;
 use crate::domain::model::jwt::Jwt;
 use crate::domain::repository::user_repository::UserRepository;
-use crate::domain::service::jwt_service::JWTService;
+use crate::domain::service::jwt_service::JwtService;
 use crate::domain::service::password_service::PasswordService;
 use std::sync::Arc;
 
 pub struct AuthorizationService<T: UserRepository> {
     password_service: Arc<PasswordService>,
-    jwt_service: Arc<JWTService>,
+    jwt_service: Arc<JwtService>,
     user_repository: Arc<T>,
 }
 
 impl<T: UserRepository> AuthorizationService<T> {
     pub fn new(
         password_service: Arc<PasswordService>,
-        jwt_service: Arc<JWTService>,
+        jwt_service: Arc<JwtService>,
         user_repository: Arc<T>,
     ) -> Self {
         AuthorizationService {
