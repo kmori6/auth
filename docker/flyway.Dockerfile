@@ -1,5 +1,5 @@
 FROM flyway/flyway:12.0
 
-COPY sql/ /flyway/sql/
+COPY ./flyway/sql/ /flyway/sql/
 
 CMD ["migrate"]
