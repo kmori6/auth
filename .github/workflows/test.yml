@@ -1,4 +1,4 @@
-name: Auth Format and Lint
+name: Auth Test
 
 on:
   pull_request:
@@ -6,16 +6,15 @@ on:
       - main
       - develop
     paths:
-      - 'apps/auth/**'
-      - '.github/workflows/auth-lint.yml'
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/test.yml'
 
 jobs:
-  lint:
-    name: Format and Lint Check
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/auth
 
     steps:
       - name: Checkout code
@@ -30,8 +29,5 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run Tests
+        run: cargo test

@@ -1,10 +1,10 @@
 services:
   auth:
     build:
-      context: ./apps/auth
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: docker/api.Dockerfile
     env_file:
-      - ./apps/auth/.env
+      - .env
     environment:
       - POSTGRES_ENDPOINT_URL=postgres://postgres:postgres@postgres:5432/auth
     ports:
@@ -18,12 +18,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./tools/migrations/data/postgres:/var/lib/postgresql
+      - ./flyway/postgresql:/var/lib/postgresql
 
   flyway-postgres:
     build:
-      context: ./tools/migrations
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: docker/flyway.Dockerfile
     command: ["migrate"]
     environment:
       - FLYWAY_URL=jdbc:postgresql://postgres:5432/postgres
@@ -34,14 +34,14 @@ services:
     # Mount host directory for hot-reload during local development
     # This overrides the /flyway/sql copied in Dockerfile with postgres-specific migrations
     volumes:
-      - ./tools/migrations/sql/postgres:/flyway/sql
+      - ./flyway/sql/postgres:/flyway/sql
     depends_on:
       - postgres
 
   flyway-auth:
     build:
-      context: ./tools/migrations
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: docker/flyway.Dockerfile
     command: ["migrate"]
     environment:
       - FLYWAY_URL=jdbc:postgresql://postgres:5432/auth
@@ -52,7 +52,7 @@ services:
     # Mount host directory for hot-reload during local development
     # This overrides the /flyway/sql copied in Dockerfile with auth-specific migrations
     volumes:
-      - ./tools/migrations/sql/auth:/flyway/sql
+      - ./flyway/sql/auth:/flyway/sql
     depends_on:
       - postgres
       - flyway-postgres

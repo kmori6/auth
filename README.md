@@ -1,13 +1,13 @@
-# Authentication & Authorization
+# Authentication & Authorization API
 
-A frontend and backend authentication and authorization system.
+Rust and Axum based authentication and authorization API with PostgreSQL, Flyway, and JWT.
 
 ## Tech Stack
 
-- **Backend**: Rust (Axum framework)
-- **Frontend**: React + TypeScript
+- **Backend**: Rust + Axum
 - **Database**: PostgreSQL
 - **Migrations**: Flyway
+- **Container Runtime**: Docker Compose
 
 ## Architecture
 
@@ -27,44 +27,43 @@ Clean architecture with three layers:
 
 ```text
 auth/
-├── apps/
-│   ├── auth/          # Rust backend service
-│   └── web/           # React frontend
-├── tools/
-│   └── flyway/        # Database migrations
+├── src/              # Rust application
+├── flyway/sql/       # Database migrations
+├── docker/           # Dockerfiles for the API and Flyway
+├── docs/             # OpenAPI specification
+├── scripts/          # Utility scripts
+├── .env.sample
 └── docker-compose.yml
 ```
 
 ## Getting Started
 
-1. Start the database:
+1. Create a local environment file:
 
    ```bash
-   docker-compose up -d
+   cp .env.sample .env
    ```
 
-2. Run migrations:
+   Set `JWT_PRIVATE_KEY` and `JWT_PUBLIC_KEY` in `.env`.
+
+2. Start PostgreSQL and run the migrations:
 
    ```bash
-   cd tools/flyway
-   ./flyway migrate
+   docker compose up -d postgres flyway-postgres flyway-auth
    ```
 
-3. Start the backend:
+3. Start the API locally:
 
    ```bash
-   cd apps/auth
    cargo run
    ```
 
-4. Start the frontend:
+4. Check the health endpoint:
 
    ```bash
-   cd apps/web
-   bun install
-   bun run dev
+   curl http://localhost:3000/healthcheck
    ```
 
 ## API Documentation
 
-API endpoints are documented in the OpenAPI specification at `apps/auth/docs/openapi.yml`.
+API endpoints are documented in `docs/openapi.yml`.
